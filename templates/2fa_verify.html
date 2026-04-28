@@ -1,0 +1,35 @@
+<EOF>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verificación 2FA - PiMonitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 300px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 1.2rem; text-align: center; letter-spacing: 3px; }
+        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .error { color: red; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Código 2FA</h2>
+        <p>Introduce el código de tu aplicación de autenticación</p>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <p class="error">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+	    <h3>Introduce el código de tu App</h3>
+	    <input type="text" name="otp_code" placeholder="000000" maxlength="6" required autofocus>
+	    <button type="submit">Validar</button>
+        </form>
+    </div>
+</body>
+</html>
