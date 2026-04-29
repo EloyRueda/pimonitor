@@ -17,7 +17,6 @@ load_dotenv("/usb/pimonitor/.env")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "una_clave_por_defecto_muy_segura")
-secret_key = pyotp.random_base32()  # Genera una clave secreta para 2FA (puedes guardarla en la DB)
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -40,6 +39,44 @@ def get_service_status(service_name):
         return res.stdout.strip()
     except:
         return "error"
+
+#Obtener información del proxy
+def get_proxy_stats():
+    try:
+        # El comando 'squidclient' da info detallada
+        result = subprocess.check_output(["squidclient", "mgr:info"]).decode()
+        # Extraer el "Cache Hit Ratio" (Eficiencia de la caché)
+        hits = [line for line in result.split('\n') if 'Request Hit Ratios' in line]
+        return hits[0] if hits else "Caché activa"
+    except Exception:
+        return "Squid no responde"
+
+def check_proxy_health():
+    # Invertimos para que la clave sea el nombre REAL del servicio
+    services = {
+        "squid": "Squid (Caché)",
+        "privoxy": "Privoxy"
+    }
+    proxy_status = []
+    
+    for svc_real_name, display_name in services.items():
+        try:
+            # Ahora svc_real_name será "squid" o "privoxy"
+            result = subprocess.run(
+                ["sudo", "systemctl", "is-active", svc_real_name], 
+                capture_output=True, 
+                text=True, 
+                timeout=2
+            )
+            status = result.stdout.strip()
+        except Exception:
+            status = "error"
+            
+        proxy_status.append({
+            "name": display_name,
+            "status": status
+        })
+    return proxy_status
 
 def check_db_login(user, password):
     conn = sqlite3.connect('/usb/pimonitor/pimonitor.db')
@@ -72,7 +109,7 @@ def login():
             
             
             flash('Usuario o contraseña incorrectos')
-            return render_template('login.html', 401) # Cargar el template con el error
+            return render_template('login.html'), 401 # Cargar el template con el error
             
     return render_template('login.html')
 
@@ -192,6 +229,9 @@ def get_data():
         except:
             status_map[srv] = 'error'
             
+    # Proxies
+    proxies_info = check_proxy_health()
+
     # Lógica especial para el contenedor DNSMASQ
     try:
         # Consultar a docker si el contenedor está corriendo
@@ -223,7 +263,9 @@ def get_data():
         "temperature": temp,
         "cpu": cpu_usage,
         "ram": ram_usage,
-        "services": status_map
+        "services": status_map,
+	"proxies": check_proxy_health(),
+	"cache_hit": get_proxy_stats()
     })
 
 @app.route('/logout')
