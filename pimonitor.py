@@ -52,30 +52,30 @@ def get_proxy_stats():
         return "Squid no responde"
 
 def check_proxy_health():
-    # Invertimos para que la clave sea el nombre REAL del servicio
     services = {
-        "squid": "Squid (Caché)",
-        "privoxy": "Privoxy"
+        "Squid (Caché)": "squid",
+        "Privoxy (Privacidad)": "privoxy"
     }
     proxy_status = []
     
-    for svc_real_name, display_name in services.items():
+    for svc_name, display_name in services.items():
         try:
-            # Ahora svc_real_name será "squid" o "privoxy"
+            # Usamos el comando que añadiste a sudoers previamente
             result = subprocess.run(
-                ["sudo", "systemctl", "is-active", svc_real_name], 
+                ["sudo", "systemctl", "is-active", svc_name], 
                 capture_output=True, 
                 text=True, 
                 timeout=2
             )
-            status = result.stdout.strip()
-        except Exception:
+            status = result.stdout.strip() # Devolverá 'active', 'inactive', 'failed', etc.
+        except Exception as e:
             status = "error"
             
         proxy_status.append({
             "name": display_name,
             "status": status
         })
+        
     return proxy_status
 
 def check_db_login(user, password):
@@ -218,55 +218,51 @@ def stats():
 @app.route('/data')
 @login_required # Para que nadie vea datos sin iniciar sesión
 def get_data():
-    services = ['nginx', 'docker', 'ssh', 'pishare']
-    status_map = {}
-    
-    for srv in services:
-        try:
-            # Ejecuta 'systemctl is-active' para cada servicio
-            res = subprocess.run(['systemctl', 'is-active', srv], capture_output=True, text=True)
-            status_map[srv] = res.stdout.strip() # Devolverá 'active', 'inactive' o 'failed'
-        except:
-            status_map[srv] = 'error'
-            
-    # Proxies
-    proxies_info = check_proxy_health()
-
-    # Lógica especial para el contenedor DNSMASQ
     try:
-        # Consultar a docker si el contenedor está corriendo
-        docker_res = subprocess.run(['docker', 'inspect', '-f', '{{.State.Status}}', 'dnsmasq-server'], 
-                                    capture_output=True, text=True)
-        # Si devuelve 'running', marcar como 'active' para que el JS lo muestre verde
-        status_map['dnsmasq-docker'] = 'active' if docker_res.stdout.strip() == 'running' else 'failed'
-    except:
-        status_map['dnsmasq-docker'] = 'error'
+        # 1. Lista de servicios a chequear
+        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy']
+        status_map = {}
         
-    try:
-        import psutil
+        for srv in services_to_check:
+            try:
+                # IMPORTANTE: Añadimos 'sudo' para tener permisos
+                res = subprocess.run(['sudo', 'systemctl', 'is-active', srv], 
+                                     capture_output=True, text=True, timeout=2)
+                status_map[srv] = res.stdout.strip()
+            except Exception:
+                status_map[srv] = 'error'
+
+        # 2. Lógica para Docker (dnsmasq)
+        try:
+            docker_res = subprocess.run(['sudo', 'docker', 'inspect', '-f', '{{.State.Status}}', 'dnsmasq-server'], 
+                                        capture_output=True, text=True, timeout=2)
+            status_raw = docker_res.stdout.strip()
+            status_map['dnsmasq'] = 'active' if status_raw == 'running' else 'failed'
+
+        except Exception:
+            print(f"Error Docker: {e}")
+            status_map['dnsmasq'] = 'error'
+            
+        # 3. Métricas de Sistema
         cpu_usage = psutil.cpu_percent(interval=None) 
         ram_usage = psutil.virtual_memory().percent
-        # Temperatura
         temp = "N/A"
         temps = psutil.sensors_temperatures()
         if 'cpu_thermal' in temps:
             temp = f"{temps['cpu_thermal'][0].current:.1f}"
+
+        # 4. Retorno de JSON (Todo dentro de un solo try)
+        return jsonify({
+            "temperature": temp,
+            "cpu": cpu_usage,
+            "ram": ram_usage,
+            "services": status_map
+        })
+
     except Exception as e:
-        cpu_usage = ram_usage = "Error"
-        temp = "N/A"
-    
-    except Exception as e:
+        # Si algo falla arriba, esto evita que la web se quede en "Cargando..."
+        print(f"Error en /data: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
-    # 4. Devolver JSON único
-    return jsonify({
-        "temperature": temp,
-        "cpu": cpu_usage,
-        "ram": ram_usage,
-        "services": status_map,
-	"proxies": check_proxy_health(),
-	"cache_hit": get_proxy_stats()
-    })
 
 @app.route('/logout')
 def logout():

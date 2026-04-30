@@ -60,6 +60,13 @@ h1 { margin-bottom: 5px; }
     margin-bottom: 6px;
     border-radius: 6px;
     font-size: 0.9em;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.service-item span {
+    font-weight: 500;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 /* Contenedor de Servidores (Abajo) */
@@ -90,11 +97,16 @@ h1 { margin-bottom: 5px; }
 }
 
 .status-active { 
-    background-color: #28a745;
+    background-color: #28a745 !important;
     color: white;
 }
 
-.status-inactive {
-    background-color: #dc3545;
+.status-error {
+    background-color: #dc3545 !important;
     color: white;
+}
+
+.status-stop{
+    background-color: #ea8f11 !important;
+    color: black;
 }
