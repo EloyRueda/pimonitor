@@ -3,7 +3,7 @@ function getStatusClass(status) {
     if (s === 'active' || s === 'running') return 'status-active';
     if (s === 'inactive' || s === 'dead') return 'status-stop';
     if (s === 'failed' || s === 'error') return 'status-error';
-    return 'status-stop'; // Por si acaso
+    return 'status-stop';
 }
 
 function getStatusClass(status) {
@@ -23,16 +23,20 @@ function updateDashboard() {
         })
         .then(data => {
             // 1. Actualizar Métricas
-            document.getElementById('temp').innerText = (data.temperature || "N/A") + "°C";
-            document.getElementById('cpu').innerText = (data.cpu || "0") + "%";
-            document.getElementById('ram').innerText = (data.ram || "0") + "%";
+            const elTemp = document.getElementById('temp');
+            const elCpu = document.getElementById('cpu');
+            const elRam = document.getElementById('ram');
 
-            // 2. Render de Servicios (Unificado)
+            if(elTemp) elTemp.innerText = (data.temperature || "N/A") + "°C";
+            if(elCpu) elCpu.innerText = (data.cpu || "0") + "%";
+            if(elRam) elRam.innerText = (data.ram || "0") + "%";
+
+            // 2. Render de Servicios
             const sContainer = document.getElementById('services-container');
             if (!sContainer) return;
 
-            let sHtml = '<h3 style="grid-column: 1/-1; text-align: left; color: #888; margin-bottom: 10px;">Estado de los Servicios</h3>';
-            
+            let sHtml = '<h3 style="grid-column: 1/-1; text-align: left; color: #888; margin-bottom: 10px; text-align: center"></h3>';
+
             // Verificamos que 'services' exista para evitar el error de 'undefined'
             if (data.services) {
                 for (const [name, status] of Object.entries(data.services)) {
@@ -44,10 +48,11 @@ function updateDashboard() {
                         </div>
                     `;
                 }
-            } else {
+            }
+	    else {
                 sHtml += '<p>No se encontraron servicios.</p>';
             }
-            
+
             sContainer.innerHTML = sHtml;
         })
         .catch(err => console.error("Error al obtener datos:", err));

@@ -1,112 +1,134 @@
-/* Base */
-body { 
+body {
+    background-color: #1a202c;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #121212;
-    color: #e0e0e0;
-    text-align: center;
+    color: #e2e8f0;
     margin: 0;
-    padding: 20px;
-}
-
-h1 { margin-bottom: 5px; }
-.logout-link { color: #ff6666; text-decoration: none; font-size: 0.9em; }
-
-/* Contenedor Superior (Métricas + Proxies) */
-.system-metrics {
-    display: flex;
+    padding: 0;
+    display: flex;          /* Volvemos a flex para centrar */
+    flex-direction: column; /* Alineamos en columna */
     justify-content: center;
-    align-items: stretch; /* Hace que todas midan lo mismo de alto */
-    flex-wrap: wrap;
-    gap: 15px;
-    margin: 30px auto;
-    max-width: 1200px;
-}
-
-/* Tarjetas de Métricas y la de Proxies */
-.status-card, .proxy-card {
-    background: #252525;
-    padding: 20px;
-    border-radius: 12px;
-    min-width: 180px;
-    flex: 1; /* Distribuye el espacio equitativamente */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    border-left: 5px solid #007bff;
-}
-
-.proxy-card {
-    border-left-color: #6f42c1; /* Color distinto para diferenciar proxies */
-    text-align: left;
-}
-
-.status-card h3, .proxy-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 1em;
-    color: #bbb;
-}
-
-.status-card p {
-    font-size: 1.4em;
-    font-weight: bold;
-    margin: 5px 0;
-}
-
-/* Items dentro de Proxies y Servicios */
-.service-item {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    background: #333;
-    padding: 8px 12px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-    font-size: 0.9em;
-    color: white;
-    transition: all 0.3s ease;
+    min-height: 100vh;      /* Usamos min-height en vez de height */
+    width: 100vw;
+    overflow-x: hidden;
 }
 
-.service-item span {
-    font-weight: 500;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+.login-card {
+    background-color: #2d3748;
+    padding: 2.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    width: 100%;            /* Ajuste para que no se pase del máximo */
+    max-width: 350px;       /* Mantenemos el ancho original */
+    text-align: center;
+    margin: auto;           /* Refuerzo de centrado */
 }
 
-/* Contenedor de Servidores (Abajo) */
-#services-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 15px;
+h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    color: #fff;
 }
 
-#services-container h3 {
-    grid-column: 1 / -1; /* Ocupa toda la fila */
+.input-group {
     text-align: left;
-    margin-bottom: 10px;
-    color: #888;
+    margin-bottom: 1rem;
 }
 
-/* Estados */
-.status-dot {
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.8em;
+label {
+    display: block;
+    font-size: 0.9rem;
+    color: #63b3ed; /* Azul claro para los labels */
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 0.5rem;
+    color: #fff;
+    box-sizing: border-box; /* Importante para el padding */
+}
+
+input:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.5);
+}
+
+button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #2b6cb0;
+    border: none;
+    border-radius: 0.5rem;
+    color: white;
     font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 1rem;
 }
 
-.status-active { 
-    background-color: #28a745 !important;
-    color: white;
+button:hover {
+    background-color: #3182ce;
 }
 
-.status-error {
-    background-color: #dc3545 !important;
-    color: white;
+.footer-text {
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.metrics-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2rem;
+}
+
+.metric-card {
+    background-color: #2d3748;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    width: 150px;
+    margin: 2rem;
+}
+
+.service-item{
+    display: inline-block;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    background-color: #2d3748;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 1.25em;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    margin-bottom: 1rem;
+    margin-left: 3%;
+    margin-right: 3%;
+}
+
+.status-active{
+    background-color: #2d8150; /* Verde para servicios activos */
 }
 
 .status-stop{
-    background-color: #ea8f11 !important;
-    color: black;
+    background-color: #b86308; /* Naranja para servicios inactivos */
+}
+
+.status-error{
+    background-color: #e53e3e; /* Rojo para servicios con error */
+}
+
+span{
+    font-weight: bold;
+}
+span.status-dot{
+    font-weight: normal;
+}
+span.status-dot::before{
+    content: '●';
+    margin-right: 0.5em;
 }

@@ -11,26 +11,25 @@
     <h1>PiMonitor Panel</h1>
     <a href="/logout" style="display: block; margin-bottom: 20px; color: #ff6666;">Cerrar Sesión</a>
 
-    <div class="system-metrics">
-        <div class="status-card">
+    <div class="metrics-container">
+        <div class="metric-card">
             <h3>🌡️ Temperatura</h3>
             <p id="temp">--°C</p>
         </div>
-        <div class="status-card">
+        <div class="metric-card">
             <h3>💻 CPU</h3>
             <p id="cpu">--%</p>
         </div>
-        <div class="status-card">
+        <div class="metric-card">
             <h3>🧠 RAM</h3>
             <p id="ram">--%</p>
         </div>
-        <hr>
-        <!--<p><small id="cache-hit" style="font-size: 0.8em; color: #888;"></small></p>-->
     </div>
 
-    <div id="services-container">
+    <div id="services-container" class="services-grid">
         <p>Cargando servicios...</p>
     </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -8,8 +8,9 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png">
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-card">
         <h2>🔒 PiMonitor Login</h2>
+	      <p style="font-size: 0.9rem; color: #a0aec0;">Introduce tus credenciales</p>
         {% with messages = get_flashed_messages() %}
           {% if messages %}
             {% for message in messages %}
@@ -18,10 +19,18 @@
           {% endif %}
         {% endwith %}
         <form method="POST">
-            <input type="text" name="username" placeholder="Usuario" required><br>
-            <input type="password" name="password" placeholder="Contraseña" required><br>
+	    <div class="input-group">
+                 <label>Usuario</label>
+                 <input type="text" name="user" placeholder="Usuario">
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" name="pass" placeholder="Contraseña">
+            </div>
             <button type="submit">Entrar</button>
         </form>
+
+        <div class="footer-text">Monitor de Sistema alojado en Raspberry Pi</div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

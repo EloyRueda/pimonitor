@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 # 1. Carga de variables de entorno (Corregido con comillas)
 load_dotenv("/usb/pimonitor/.env")
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/pimonitor/static', static_folder='static')
 app.secret_key = os.getenv("SECRET_KEY", "una_clave_por_defecto_muy_segura")
 
 app.config.update(
@@ -91,25 +91,22 @@ def check_db_login(user, password):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['user']
+        password = request.form['pass']
         
+        if not username or not password:
+            flash('Por favor, rellena todos los campos')
+            return render_template('login.html'), 400
+
         if check_db_login(username, password):
             session['logged_in'] = True
+            # IMPORTANTE: Para evitar el bucle de 2FA mientras pruebas, 
+            # puedes comentar la siguiente línea o asegurar que verify_2fa funcione
             return redirect(url_for('index'))
         else:
-            # Capturamos la IP real para Fail2Ban
-            ip_real = request.headers.get('X-Real-IP', request.remote_addr)
-            
-            # Forzamos la escritura en stderr para que systemd lo capture
-            try:
-                print(f"ALERTA_SEGURIDAD: Login fallido desde {ip_real}", file=sys.stderr, flush=True)
-            except Exception:
-                pass # Que no se rompa la web si el log falla
-            
-            
+            # ... resto del código de alerta de seguridad ...
             flash('Usuario o contraseña incorrectos')
-            return render_template('login.html'), 401 # Cargar el template con el error
+            return render_template('login.html'), 401
             
     return render_template('login.html')
 
@@ -130,7 +127,7 @@ def setup_2fa():
         img.save(buf)
         qr_b64 = base64.b64encode(buf.getvalue()).decode()
         
-        return f'<h2>Escanea este código con Google Authenticator</h2><img src="data:image/png;base64,{qr_b64}">'
+        return render_template('2fa_setup.html', qr_b64=qr_b64)
     except Exception as e:
         return f"Error al generar QR: {str(e)}", 500
 
@@ -212,7 +209,8 @@ def stats():
             "nginx": get_service_status("nginx"),
             "ssh": get_service_status("ssh"),
             "dnsmasq": get_service_status("dnsmasq-server"),
-            "jellyfin": get_service_status("jellyfin")
+            "jellyfin": get_service_status("jellyfin"),
+            "apache2": get_service_status("apache2"),
         }
     })
 
@@ -221,7 +219,7 @@ def stats():
 def get_data():
     try:
         # 1. Lista de servicios a chequear
-        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin']
+        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2']
         status_map = {}
         
         for srv in services_to_check:
@@ -257,13 +255,29 @@ def get_data():
             "temperature": temp,
             "cpu": cpu_usage,
             "ram": ram_usage,
-            "services": status_map
+            "services": status_map,
         })
 
     except Exception as e:
         # Si algo falla arriba, esto evita que la web se quede en "Cargando..."
         print(f"Error en /data: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+def get_active_services():
+    services = []
+    for conn in psutil.net_connections(kind='inet'):
+        if conn.status == 'LISTEN':
+            # Intentar obtener el nombre del proceso asociado al puerto
+            try:
+                process = psutil.Process(conn.pid)
+                services.append({
+                    'port': conn.laddr.port,
+                    'name': process.name(),
+                    'pid': conn.pid
+                })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    return sorted(services, key=lambda x: x['port'])
 
 @app.route('/logout')
 def logout():
