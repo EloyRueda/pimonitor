@@ -211,6 +211,7 @@ def stats():
             "dnsmasq": get_service_status("dnsmasq-server"),
             "jellyfin": get_service_status("jellyfin"),
             "apache2": get_service_status("apache2"),
+            "pihole-FTL": get_service_status("pihole-FTL")
         }
     })
 
@@ -219,7 +220,7 @@ def stats():
 def get_data():
     try:
         # 1. Lista de servicios a chequear
-        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2']
+        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL']
         status_map = {}
         
         for srv in services_to_check:
