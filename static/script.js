@@ -26,10 +26,16 @@ function updateDashboard() {
             const elTemp = document.getElementById('temp');
             const elCpu = document.getElementById('cpu');
             const elRam = document.getElementById('ram');
+            const elSwap = document.getElementById('swap');
+            const elDisk = document.getElementById('disk');
+            const elUsb = document.getElementById('usb');
 
             if(elTemp) elTemp.innerText = (data.temperature || "N/A") + "°C";
             if(elCpu) elCpu.innerText = (data.cpu || "0") + "%";
             if(elRam) elRam.innerText = (data.ram || "0") + "%";
+            if(elSwap) elSwap.innerText = (data.swap_usage || "0") + "%";
+            if(elDisk) elDisk.innerText = (data.disk_usage || "0") + "%";
+            if(elUsb) elUsb.innerText = (data.usb_usage || "0") + "%";
 
             // 2. Render de Servicios
             const sContainer = document.getElementById('services-container');
@@ -38,7 +44,7 @@ function updateDashboard() {
             let sHtml = '<h3 style="grid-column: 1/-1; text-align: left; color: #888; margin-bottom: 10px; text-align: center"></h3>';
 
             // Verificamos que 'services' exista para evitar el error de 'undefined'
-            if (data.services) {
+            if (data.services && Object.keys(data.services).length > 0) {
                 for (const [name, status] of Object.entries(data.services)) {
                     const sClass = getStatusClass(status);
                     sHtml += `
@@ -49,7 +55,7 @@ function updateDashboard() {
                     `;
                 }
             }
-	    else {
+    	    else {
                 sHtml += '<p>No se encontraron servicios.</p>';
             }
 

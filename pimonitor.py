@@ -203,7 +203,9 @@ def stats():
         "cpu_usage": psutil.cpu_percent(),
         "cpu_temp": psutil.sensors_temperatures()['cpu_thermal'][0].current if 'cpu_thermal' in psutil.sensors_temperatures() else 0,
         "ram": psutil.virtual_memory().percent,
-        "swap": psutil.swap_memory().percent,
+        "swap_usage": psutil.swap_memory().percent,
+        "disk_usage": psutil.disk_usage('/').percent,
+        "usb_usage": psutil.disk_usage('/usb').percent,
         "services": {
             "pishare": get_service_status("pishare"),
             "nginx": get_service_status("nginx"),
@@ -211,21 +213,21 @@ def stats():
             "dnsmasq": get_service_status("dnsmasq-server"),
             "jellyfin": get_service_status("jellyfin"),
             "apache2": get_service_status("apache2"),
-            "pihole-FTL": get_service_status("pihole-FTL")
+            "pihole-FTL": get_service_status("pihole-FTL"),
+	    "transmission-daemon": get_service_status("transmission-daemon")
         }
     })
 
 @app.route('/data')
-@login_required # Para que nadie vea datos sin iniciar sesión
+@login_required
 def get_data():
     try:
         # 1. Lista de servicios a chequear
-        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL']
+        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL', 'transmission-daemon']
         status_map = {}
         
         for srv in services_to_check:
             try:
-                # IMPORTANTE: Añadimos 'sudo' para tener permisos
                 res = subprocess.run(['sudo', 'systemctl', 'is-active', srv], 
                                      capture_output=True, text=True, timeout=2)
                 status_map[srv] = res.stdout.strip()
@@ -238,29 +240,40 @@ def get_data():
                                         capture_output=True, text=True, timeout=2)
             status_raw = docker_res.stdout.strip()
             status_map['dnsmasq'] = 'active' if status_raw == 'running' else 'failed'
-
-        except Exception:
+        except Exception as e: # Corregido: añadida la variable 'e' que faltaba en el catch
             print(f"Error Docker: {e}")
             status_map['dnsmasq'] = 'error'
             
-        # 3. Métricas de Sistema
+        # 3. Métricas de Sistema (¡Aquí estaba el fallo, ahora sí se calculan todas!)
         cpu_usage = psutil.cpu_percent(interval=None) 
         ram_usage = psutil.virtual_memory().percent
+        swap_usage = psutil.swap_memory().percent
+        
+        # 🌟 NUEVO: Calculamos los porcentajes que faltaban
+        disk_usage = psutil.disk_usage('/').percent
+        
+        try:
+            usb_usage = psutil.disk_usage('/usb').percent
+        except Exception:
+            usb_usage = 0 # Por si el USB no estuviese montado en ese momento
+
         temp = "N/A"
         temps = psutil.sensors_temperatures()
         if 'cpu_thermal' in temps:
             temp = f"{temps['cpu_thermal'][0].current:.1f}"
 
-        # 4. Retorno de JSON (Todo dentro de un solo try)
+        # 4. Retorno de JSON limpio y emparejado con tu frontend
         return jsonify({
             "temperature": temp,
             "cpu": cpu_usage,
             "ram": ram_usage,
+            "swap_usage": swap_usage,
+            "disk_usage": disk_usage,
+            "usb_usage": usb_usage,
             "services": status_map,
         })
 
     except Exception as e:
-        # Si algo falla arriba, esto evita que la web se quede en "Cargando..."
         print(f"Error en /data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
