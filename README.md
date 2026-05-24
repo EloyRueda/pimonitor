@@ -66,3 +66,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable pimonitor.service
 sudo systemctl start pimonitor.service
 Puedes verificar que el panel está corriendo seguro en segundo plano ejecutando service pimonitor status.
+
+## ⚙️ Personalización de Servicios (Backend)
+
+⚠️ **¡AVISO IMPORTANTE PARA CONTRIBUIDORES Y FORKS!** El backend de esta aplicación (`pimonitor.py`) está configurado para comprobar de forma específica los servicios activos en mi servidor local. Si clonas este repositorio o vas a realizar un despliegue (`push`), **debes editar el archivo de backend en Python** para adaptar la lista de servicios a los que tengas configurados en tu propia máquina.
+
+Busca en el código `pimonitor.py` el array o la función encargada de supervisar los demonios del sistema y modifica los nombres (ej. `nginx`, `docker`, `smbd`) por los tuyos:
+
+```python
+# Ejemplo de la sección a modificar en pimonitor.py
+SERVICIOS_A_MONITORIZAR = ['docker', 'squid', 'ssh', 'tu_servicio_aqui']
