@@ -7,6 +7,7 @@ import pyotp
 import qrcode
 import base64
 import io
+import time
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, flash
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -20,9 +21,14 @@ app.secret_key = os.getenv("SECRET_KEY", "una_clave_por_defecto_muy_segura")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SECURE=True,   # Cambiar a True solo cuando tengas HTTPS
+    SESSION_COOKIE_SECURE=True,   # Cambiar a True solo cuando exista HTTPS
     SESSION_COOKIE_SAMESITE='Lax',
 )
+
+# Variables globales para almacenar la última lectura en memoria
+ultima_lectura_tiempo = time.time()
+ultimos_bytes_recibidos = psutil.net_io_counters().bytes_recv
+ultimos_bytes_enviados = psutil.net_io_counters().bytes_sent
 
 # Decorador para proteger rutas
 def login_required(f):
@@ -152,7 +158,7 @@ def verify_2fa():
 @app.route('/login-2fa', methods=['POST'])
 def login_2fa():
     if request.method == 'POST':
-        # Recuperamos al usuario que está "en espera"
+        # Recuperar al usuario que está "en espera"
         user_id = session.get('temp_user_id')
         if not user_id:
             return redirect(url_for('login'))
@@ -163,7 +169,7 @@ def login_2fa():
         totp = pyotp.totp.TOTP(user.mfa_secret)
         
         if totp.verify(token):
-            # ¡Código correcto! Limpiamos la sesión temporal e iniciamos sesión real
+            # Limpiar la sesión temporal e iniciar sesión real
             session.pop('temp_user_id')
             login_user(user)
             return redirect(url_for('index'))
@@ -225,10 +231,10 @@ def get_data():
         # 1. Lista de servicios a chequear
         services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL', 'transmission-daemon']
         status_map = {}
-        
+
         for srv in services_to_check:
             try:
-                res = subprocess.run(['sudo', 'systemctl', 'is-active', srv], 
+                res = subprocess.run(['sudo', 'systemctl', 'is-active', srv],
                                      capture_output=True, text=True, timeout=2)
                 status_map[srv] = res.stdout.strip()
             except Exception:
@@ -236,22 +242,20 @@ def get_data():
 
         # 2. Lógica para Docker (dnsmasq)
         try:
-            docker_res = subprocess.run(['sudo', 'docker', 'inspect', '-f', '{{.State.Status}}', 'dnsmasq-server'], 
+            docker_res = subprocess.run(['sudo', 'docker', 'inspect', '-f', '{{.State.Status}}', 'dnsmasq-server'],
                                         capture_output=True, text=True, timeout=2)
             status_raw = docker_res.stdout.strip()
             status_map['dnsmasq'] = 'active' if status_raw == 'running' else 'failed'
-        except Exception as e: # Corregido: añadida la variable 'e' que faltaba en el catch
+        except Exception as e:
             print(f"Error Docker: {e}")
             status_map['dnsmasq'] = 'error'
-            
-        # 3. Métricas de Sistema (¡Aquí estaba el fallo, ahora sí se calculan todas!)
-        cpu_usage = psutil.cpu_percent(interval=None) 
+
+        # 3. Métricas de Sistema
+        cpu_usage = psutil.cpu_percent(interval=None)
         ram_usage = psutil.virtual_memory().percent
         swap_usage = psutil.swap_memory().percent
-        
-        # 🌟 NUEVO: Calculamos los porcentajes que faltaban
         disk_usage = psutil.disk_usage('/').percent
-        
+
         try:
             usb_usage = psutil.disk_usage('/usb').percent
         except Exception:
@@ -262,7 +266,10 @@ def get_data():
         if 'cpu_thermal' in temps:
             temp = f"{temps['cpu_thermal'][0].current:.1f}"
 
-        # 4. Retorno de JSON limpio y emparejado con tu frontend
+        # 🌐 4. CALCULAR VELOCIDAD DE RED REAL (AÑADIDO)
+        vel_descarga, vel_subida = calcular_velocidad_red()
+
+        # 5. Retorno de JSON limpio y emparejado con tu frontend (INCLUYE RED)
         return jsonify({
             "temperature": temp,
             "cpu": cpu_usage,
@@ -271,6 +278,8 @@ def get_data():
             "disk_usage": disk_usage,
             "usb_usage": usb_usage,
             "services": status_map,
+            "red_descarga": vel_descarga,  # <-- El JS ya no se romperá buscando esto
+            "red_subida": vel_subida       # <-- El JS ya no se romperá buscando esto
         })
 
     except Exception as e:
@@ -292,6 +301,40 @@ def get_active_services():
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
     return sorted(services, key=lambda x: x['port'])
+
+def obtener_metricas_red():
+    # Obtener los bytes totales desde el último reinicio
+    net_io = psutil.net_io_counters()
+    return {
+        "bytes_enviados": net_io.bytes_sent,
+        "bytes_recibidos": net_io.bytes_recv
+    }
+
+def calcular_velocidad_red():
+    global ultima_lectura_tiempo, ultimos_bytes_recibidos, ultimos_bytes_enviados
+
+    tiempo_actual = time.time()
+    datos_red = psutil.net_io_counters()
+
+    # Calcular el tiempo transcurrido desde la última comprobación
+    delta_tiempo = tiempo_actual - ultima_lectura_tiempo
+    if delta_tiempo <= 0:
+        return 0, 0
+
+    # Calcular bytes transmitidos en este intervalo
+    bytes_descarga = datos_red.bytes_recv - ultimos_bytes_recibidos
+    bytes_subida = datos_red.bytes_sent - ultimos_bytes_enviados
+
+    # Convertir a Kilobytes por segundo (KB/s)
+    velocidad_descarga = (bytes_descarga / 1024) / delta_tiempo
+    velocidad_subida = (bytes_subida / 1024) / delta_tiempo
+
+    # Actualizar el estado para la siguiente lectura
+    ultima_lectura_tiempo = tiempo_actual
+    ultimos_bytes_recibidos = datos_red.bytes_recv
+    ultimos_bytes_enviados = datos_red.bytes_sent
+
+    return round(velocidad_descarga, 2), round(velocidad_subida, 2)
 
 @app.route('/logout')
 def logout():

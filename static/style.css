@@ -83,8 +83,11 @@ button:hover {
 
 .metrics-container {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    flex-wrap: wrap; /* Permitir que las tarjetas bajen si no caben en horizontal */
     margin-top: 2rem;
+    margin-left: 5%;
+    margin-right: 5%;
 }
 
 .metric-card {

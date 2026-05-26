@@ -53,15 +53,26 @@ function updateDashboard() {
                             <span class="status-dot">${status.toUpperCase()}</span>
                         </div>
                     `;
-                }
+                 }
             }
     	    else {
                 sHtml += '<p>No se encontraron servicios.</p>';
             }
 
+            document.getElementById('red-descarga').innerText = formatearVelocidad(data.red_descarga);
+            document.getElementById('red-subida').innerText = formatearVelocidad(data.red_subida);
+
             sContainer.innerHTML = sHtml;
         })
         .catch(err => console.error("Error al obtener datos:", err));
+}
+
+// Función auxiliar para que la interfaz pase automáticamente de KB/s a MB/s
+function formatearVelocidad(kbps) {
+    if (kbps >= 1024) {
+        return (kbps / 1024).toFixed(2) + ' MB/s';
+    }
+    return kbps.toFixed(2) + ' KB/s';
 }
 
 setInterval(updateDashboard, 5000);
