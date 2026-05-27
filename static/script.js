@@ -75,5 +75,44 @@ function formatearVelocidad(kbps) {
     return kbps.toFixed(2) + ' KB/s';
 }
 
+function actualizarDispositivosRed() {
+    fetch('/api/network-hosts')
+    .then(response => {
+        if (!response.ok) throw new Error('Error al escanear');
+        return response.json();
+    })
+    .then(data => {
+        const tbody = document.getElementById('lista-hosts');
+        tbody.innerHTML = '';
+
+        if (!data.hosts || data.hosts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding: 15px 0; text-align: center;">No se detectaron otros equipos activos.</td></tr>';
+            return;
+        }
+        data.hosts.sort((a, b) => a.ip.localeCompare(b.ip, undefined, { numeric: true }));
+
+        data.hosts.forEach(host => {
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #2d3748; height: 45px;">
+                    <td style="font-weight: bold; color: #fff;">${host.ip}</td>
+                    <td style="color: #63b3ed; font-size: 0.9em;">${host.vendor}</td> <td style="font-family: monospace; color: #cbd5e1; letter-spacing: 0.5px;">${host.mac}</td>
+                    <td style="text-align: right;">
+                        <span class="status-dot status-active" style="padding: 4px 10px; border-radius: 6px; font-size: 0.8em; color: #fff;">ONLINE</span>
+                    </td>
+                </tr>
+                `;
+        });
+    })
+    .catch(error => {
+        console.error('Error de red:', error);
+        document.getElementById('lista-hosts').innerHTML = `<tr><td colspan="4" style="padding: 15px 0; text-align: center; color: #e53e3e;">Error al compilar la tabla ARP del sistema</td></tr>`;
+    });
+}
+
+// Ejecutar el escáner al cargar la página por primera vez
+actualizarDispositivosRed();
+
 setInterval(updateDashboard, 5000);
+// Refrescar de forma pasiva cada 10 minutos (600000 ms) para no sobrecargar el servidor
+setInterval(actualizarDispositivosRed, 600000);
 updateDashboard();

@@ -8,6 +8,7 @@ import qrcode
 import base64
 import io
 import time
+import re
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, flash
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -336,10 +337,90 @@ def calcular_velocidad_red():
 
     return round(velocidad_descarga, 2), round(velocidad_subida, 2)
 
+
+def obtener_fabricante_mac(mac):
+    try:
+        # Lista de MAC-fabricante que nmap desconoce
+        EXCEPCIONES_MAC = {
+            "106838": "HP"
+        }
+
+        # Limpiar la MAC para tener el formato AA:BB:CC
+        prefix = "".join(mac.split(":")[:3]).upper()
+
+        if prefix in EXCEPCIONES_MAC:
+            return EXCEPCIONES_MAC[prefix]
+
+	# Direcciones MAC que no están en la lista EXCEPCIONES_MAC
+        rutas_db = [
+            "/usr/share/nmap/nmap-mac-prefixes",
+            "/usr/share/ieee-data/oui.txt"
+        ]
+
+        for ruta in rutas_db:
+            if os.path.exists(ruta):
+                try:
+                    # Intentar abrirlo. Si da error de permisos, saltará al except interno
+                    with open(ruta, "r", encoding="utf-8", errors="ignore") as f:
+                        for linea in f:
+                            if linea.strip().startswith(prefix):
+                                partes = linea.split(maxsplit=1)
+                                if len(partes) > 1:
+                                    return partes[1].strip()
+                except Exception as e:
+                    # Si el usuario pimonitor no tiene permisos para este archivo, probar el siguiente
+                    print(f"DEBUG: No se pudo leer la ruta {ruta}: {str(e)}")
+                    continue
+    except Exception:
+        pass
+
+    return "Desconocido"
+
+
+@app.route('/api/network-hosts')
+@login_required
+def get_network_hosts():
+    # Doble check de seguridad
+    if not session.get('logged_in') or not session.get('2fa_authenticated'):
+        return jsonify({"error": "Acceso denegado"}), 403
+
+    hosts_conectados = []
+    try:
+        # Leemos directamente la tabla ARP del kernel de Linux
+        if os.path.exists("/proc/net/arp"):
+            with open("/proc/net/arp", "r", encoding="utf-8") as f:
+                lineas = f.readlines()
+            
+            # La primera línea es la cabecera (IP address, HW type, Flags, HW address, etc.)
+            for linea in lineas[1:]:
+                partes = linea.split()
+                if len(partes) >= 4:
+                    ip = partes[0]
+                    mac = partes[3].upper()
+                    
+                    # Omitimos cabeceras vacías, IPs locales o registros incompletos
+                    if mac == "00:00:00:00:00:00" or "<INCOMPLETE>" in mac:
+                        continue
+                    
+                    # Buscamos el fabricante en nuestra función local protegida
+                    vendor = obtener_fabricante_mac(mac)
+                    
+                    hosts_conectados.append({
+                        "ip": ip,
+                        "mac": mac,
+                        "vendor": vendor
+                    })
+        return jsonify({"hosts": hosts_conectados})
+
+    except Exception as e:
+        print(f"Error en escáner de red: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/logout')
 def logout():
     # Limpiar todas las variables de sesión
-    session.clear() 
+    session.clear()
     flash('Has cerrado sesión correctamente')
     return redirect(url_for('login'))
 
