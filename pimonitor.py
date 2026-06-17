@@ -221,7 +221,9 @@ def stats():
             "jellyfin": get_service_status("jellyfin"),
             "apache2": get_service_status("apache2"),
             "pihole-FTL": get_service_status("pihole-FTL"),
-	    "transmission-daemon": get_service_status("transmission-daemon")
+	    "transmission-daemon": get_service_status("transmission-daemon"),
+	    "agenda-cron": get_service_status("agenda-cron"),
+	    "agenda-web": get_service_status("agenda-web")
         }
     })
 
@@ -230,7 +232,7 @@ def stats():
 def get_data():
     try:
         # 1. Lista de servicios a chequear
-        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL', 'transmission-daemon']
+        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL', 'transmission-daemon', 'agenda-cron', 'agenda-web']
         status_map = {}
 
         for srv in services_to_check:
