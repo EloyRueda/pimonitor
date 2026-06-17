@@ -38,31 +38,42 @@ function updateDashboard() {
             if(elUsb) elUsb.innerText = (data.usb_usage || "0") + "%";
 
             // 2. Render de Servicios
-            const sContainer = document.getElementById('services-container');
-            if (!sContainer) return;
+            const tablaServicios = document.getElementById('lista-servicios');
 
-            let sHtml = '<h3 style="grid-column: 1/-1; text-align: left; color: #888; margin-bottom: 10px; text-align: center"></h3>';
+            if (tablaServicios) {
+                let sHtml = '';
 
-            // Verificamos que 'services' exista para evitar el error de 'undefined'
-            if (data.services && Object.keys(data.services).length > 0) {
-                for (const [name, status] of Object.entries(data.services)) {
-                    const sClass = getStatusClass(status);
-                    sHtml += `
-                        <div class="service-item ${sClass}">
-                            <span>${name.toUpperCase()}</span>
-                            <span class="status-dot">${status.toUpperCase()}</span>
-                        </div>
-                    `;
-                 }
+                // Verificar que 'services' exista y tenga datos
+                if (data.services && Object.keys(data.services).length > 0) {
+                    for (const [name, status] of Object.entries(data.services)) {
+                        const sClass = getStatusClass(status); // Obtiene status-active, status-stop, etc.
+
+                        sHtml += `
+                            <tr style="border-bottom: 1px solid #2d3748; height: 45px;">
+                                <td style="font-weight: bold; color: #fff; text-transform: uppercase;">${name}</td>
+                                <td>
+                                    <span class="status-dot ${sClass}" style="padding: 4px 10px; border-radius: 6px; font-size: 0.8em; color: #fff; display: inline-block;">
+                                        ${status.toUpperCase()}
+                                    </span>
+                                </td>
+                                <td style="text-align: right; color: #a6adc8; font-size: 0.85em;">
+                                    systemd
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+		else {
+                    sHtml = '<tr><td colspan="3" style="padding: 15px 0; text-align: center; color: #718096;">No se encontraron servicios.</td></tr>';
+                }
+                tablaServicios.innerHTML = sHtml;
             }
-    	    else {
-                sHtml += '<p>No se encontraron servicios.</p>';
-            }
 
-            document.getElementById('red-descarga').innerText = formatearVelocidad(data.red_descarga);
-            document.getElementById('red-subida').innerText = formatearVelocidad(data.red_subida);
-
-            sContainer.innerHTML = sHtml;
+            // 3. Actualizar velocidades de Red (Fuera del bloque anterior para asegurar que siempre corra)
+            const elDescarga = document.getElementById('red-descarga');
+            const elSubida = document.getElementById('red-subida');
+            if (elDescarga) elDescarga.innerText = formatearVelocidad(data.red_descarga);
+            if (elSubida) elSubida.innerText = formatearVelocidad(data.red_subida);
         })
         .catch(err => console.error("Error al obtener datos:", err));
 }

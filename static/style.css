@@ -4,11 +4,11 @@ body {
     color: #e2e8f0;
     margin: 0;
     padding: 0;
-    display: flex;          /* Volvemos a flex para centrar */
-    flex-direction: column; /* Alineamos en columna */
+    display: flex;          
+    flex-direction: column; 
     justify-content: center;
     align-items: center;
-    min-height: 100vh;      /* Usamos min-height en vez de height */
+    min-height: 100vh;      
     width: 100vw;
     overflow-x: hidden;
 }
@@ -18,10 +18,10 @@ body {
     padding: 2.5rem;
     border-radius: 1rem;
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    width: 100%;            /* Ajuste para que no se pase del máximo */
-    max-width: 350px;       /* Mantenemos el ancho original */
+    width: 100%;            
+    max-width: 350px;       
     text-align: center;
-    margin: auto;           /* Refuerzo de centrado */
+    margin: auto;           
 }
 
 h2 {
@@ -38,7 +38,7 @@ h2 {
 label {
     display: block;
     font-size: 0.9rem;
-    color: #63b3ed; /* Azul claro para los labels */
+    color: #63b3ed; 
     margin-bottom: 0.5rem;
 }
 
@@ -49,7 +49,7 @@ input[type="text"], input[type="password"] {
     border: 1px solid #4a5568;
     border-radius: 0.5rem;
     color: #fff;
-    box-sizing: border-box; /* Importante para el padding */
+    box-sizing: border-box; 
 }
 
 input:focus {
@@ -84,7 +84,7 @@ button:hover {
 .metrics-container {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap; /* Permitir que las tarjetas bajen si no caben en horizontal */
+    flex-wrap: wrap; 
     margin-top: 2rem;
     margin-left: 5%;
     margin-right: 5%;
@@ -99,39 +99,67 @@ button:hover {
     margin: 2rem;
 }
 
-.service-item{
+/* Estilo base para las filas de las tablas */
+tr {
+    border-bottom: 1px solid #2d3748;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Efecto hover interactivo al pasar el ratón por encima de una fila */
+tr:hover {
+    background-color: #242f41; 
+}
+
+/* Ajuste general de las celdas */
+td {
+    padding: 10px 8px;
+    vertical-align: middle;
+}
+
+/* TRATAMIENTO PARA EL NOMBRE DE LOS SERVICIOS (Más grandes y legibles) */
+#lista-servicios td:first-child {
+    font-size: 1.25rem;        /* Tamaño aumentado para que destaque */
+    font-weight: 600;          /* Grosor seminegrita nítido */
+    color: #ffffff;            /* Blanco puro brillante */
+    letter-spacing: 0.5px;     /* Ligero espaciado elegante */
+}
+
+/* Estilos de las pastillas/badges de estado */
+.status-dot {
     display: inline-block;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    background-color: #2d3748;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    font-size: 1.25em;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    margin-bottom: 1rem;
-    margin-left: 3%;
-    margin-right: 3%;
+    padding: 6px 12px !important; /* Más empaque de botón/pastilla */
+    border-radius: 6px;
+    font-size: 0.8rem !important;
+    font-weight: bold !important;
+    color: #fff;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.status-active{
-    background-color: #2d8150; /* Verde para servicios activos */
+.status-active {
+    background-color: #2d8150; /* Verde */
 }
 
-.status-stop{
-    background-color: #b86308; /* Naranja para servicios inactivos */
+.status-stop {
+    background-color: #b86308; /* Naranja */
 }
 
-.status-error{
-    background-color: #e53e3e; /* Rojo para servicios con error */
+.status-error {
+    background-color: #e53e3e; /* Rojo */
 }
 
-span{
+/* Corrección de herencias globales */
+span {
     font-weight: bold;
 }
-span.status-dot{
-    font-weight: normal;
+
+span.status-dot {
+    font-weight: bold; /* Forzado a bold para que resalte dentro de la pastilla */
 }
-span.status-dot::before{
+
+/* Punto decorativo opcional dentro de la pastilla */
+span.status-dot::before {
     content: '●';
-    margin-right: 0.5em;
+    margin-right: 0.4em;
+    font-size: 0.9em;
 }
