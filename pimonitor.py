@@ -107,8 +107,6 @@ def login():
 
         if check_db_login(username, password):
             session['logged_in'] = True
-            # IMPORTANTE: Para evitar el bucle de 2FA mientras pruebas, 
-            # puedes comentar la siguiente línea o asegurar que verify_2fa funcione
             return redirect(url_for('index'))
         else:
             # ... resto del código de alerta de seguridad ...
@@ -269,10 +267,10 @@ def get_data():
         if 'cpu_thermal' in temps:
             temp = f"{temps['cpu_thermal'][0].current:.1f}"
 
-        # 🌐 4. CALCULAR VELOCIDAD DE RED REAL (AÑADIDO)
+        # 5. CALCULAR VELOCIDAD DE RED REAL
         vel_descarga, vel_subida = calcular_velocidad_red()
 
-        # 5. Retorno de JSON limpio y emparejado con tu frontend (INCLUYE RED)
+        # 6. Retorno de JSON limpio y emparejado con el frontend
         return jsonify({
             "temperature": temp,
             "cpu": cpu_usage,
@@ -281,8 +279,8 @@ def get_data():
             "disk_usage": disk_usage,
             "usb_usage": usb_usage,
             "services": status_map,
-            "red_descarga": vel_descarga,  # <-- El JS ya no se romperá buscando esto
-            "red_subida": vel_subida       # <-- El JS ya no se romperá buscando esto
+            "red_descarga": vel_descarga,
+            "red_subida": vel_subida,
         })
 
     except Exception as e:
@@ -417,7 +415,6 @@ def get_network_hosts():
     except Exception as e:
         print(f"Error en escáner de red: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/logout')
 def logout():
