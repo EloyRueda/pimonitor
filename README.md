@@ -76,3 +76,4 @@ Busca en el código `pimonitor.py` el array o la función encargada de supervisa
 ```python
 # Ejemplo de la sección a modificar en pimonitor.py
 SERVICIOS_A_MONITORIZAR = ['docker', 'squid', 'ssh', 'tu_servicio_aqui']
+```
