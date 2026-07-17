@@ -71,7 +71,23 @@ Puedes verificar que el panel está corriendo seguro en segundo plano ejecutando
 
 ⚠️ **¡AVISO IMPORTANTE PARA CONTRIBUIDORES Y FORKS!** El backend de esta aplicación (`pimonitor.py`) está configurado para comprobar de forma específica los servicios activos en mi servidor local. Si clonas este repositorio o vas a realizar un despliegue (`push`), **debes editar el archivo de backend en Python** para adaptar la lista de servicios a los que tengas configurados en tu propia máquina.
 
-Busca en el código `pimonitor.py` el array o la función encargada de supervisar los demonios del sistema y modifica los nombres (ej. `nginx`, `docker`, `smbd`) por los tuyos:
+Busca en el código `pimonitor.py` el array o la función encargada de supervisar los demonios del sistema y modifica los nombres (ej. `docker`, `squid`, `ssh`) por los tuyos:
+
+```python
+def stats():
+    return jsonify({
+        "cpu_usage": psutil.cpu_percent(),
+        "cpu_temp": psutil.sensors_temperatures()['cpu_thermal'][0].current if 'cpu_thermal' in psutil.sensors_temperatures() else 0,
+        "ram": psutil.virtual_memory().percent,
+        "swap_usage": psutil.swap_memory().percent,
+        "disk_usage": psutil.disk_usage('/').percent,
+        "usb_usage": psutil.disk_usage('/usb').percent,
+        "services": {
+            "docker": get_service_status("docker"),
+            "squid": get_service_status("squid"),
+            "ssh": get_service_status("ssh"),
+            "tu_servicio_aqui": get_service_status("tu_servicio_aqui")
+```
 
 ```python
 # Ejemplo de la sección a modificar en pimonitor.py
