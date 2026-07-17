@@ -91,5 +91,5 @@ def stats():
 
 ```python
 # Ejemplo de la sección a modificar en pimonitor.py
-SERVICIOS_A_MONITORIZAR = ['docker', 'squid', 'ssh', 'tu_servicio_aqui']
+services_to_check = ['docker', 'squid', 'ssh', 'tu_servicio_aqui']
 ```
