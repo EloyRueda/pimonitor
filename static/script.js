@@ -21,6 +21,7 @@ function updateDashboard() {
             const elSwap = document.getElementById('swap');
             const elDisk = document.getElementById('disk');
             const elUsb = document.getElementById('usb');
+            const elUsb2 = document.getElementById('usb2');
             const elVpnIcono = document.getElementById('vpn-icono');
             const elVpnTexto = document.getElementById('vpn-texto');
 
@@ -30,7 +31,8 @@ function updateDashboard() {
             if(elSwap) elSwap.innerText = (data.swap_usage || "0") + "%";
             if(elDisk) elDisk.innerText = (data.disk_usage || "0") + "%";
             if(elUsb) elUsb.innerText = (data.usb_usage || "0") + "%";
-            
+            if(elUsb2) elUsb2.innerText = (data.usb2_usage || "0") + "%";
+
             // Escudo protector para la VPN
             if(elVpnIcono) elVpnIcono.innerText = data.vpn_icono || "⚪";
             if(elVpnTexto) elVpnTexto.innerText = data.vpn_texto || "Cargando...";

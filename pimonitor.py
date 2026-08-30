@@ -67,14 +67,14 @@ def check_proxy_health():
     
     for svc_name, display_name in services.items():
         try:
-            # Usamos el comando que añadiste a sudoers previamente
+            # Usar el comando para sudoers
             result = subprocess.run(
-                ["sudo", "systemctl", "is-active", svc_name], 
-                capture_output=True, 
-                text=True, 
+                ["sudo", "systemctl", "is-active", svc_name],
+                capture_output=True,
+                text=True,
                 timeout=2
             )
-            status = result.stdout.strip() # Devolverá 'active', 'inactive', 'failed', etc.
+            status = result.stdout.strip() # Devuelve 'active', 'inactive', 'failed', etc.
         except Exception as e:
             status = "error"
             
@@ -209,8 +209,9 @@ def stats():
         "cpu_temp": psutil.sensors_temperatures()['cpu_thermal'][0].current if 'cpu_thermal' in psutil.sensors_temperatures() else 0,
         "ram": psutil.virtual_memory().percent,
         "swap_usage": psutil.swap_memory().percent,
-        "disk_usage": psutil.disk_usage('/').percent,
-        "usb_usage": psutil.disk_usage('/usb').percent,
+        "disk_usage": safe_disk_usage('/').percent,
+        "usb_usage": safe_disk_usage('/usb').percent,
+        "usb2_usage": safe_disk_usage('/usb2').percent,
         "services": {
             "pishare": get_service_status("pishare"),
             "nginx": get_service_status("nginx"),
@@ -221,7 +222,12 @@ def stats():
             "pihole-FTL": get_service_status("pihole-FTL"),
 	    "transmission-daemon": get_service_status("transmission-daemon"),
 	    "agenda-cron": get_service_status("agenda-cron"),
-	    "agenda-web": get_service_status("agenda-web")
+	    "agenda-web": get_service_status("agenda-web"),
+	    "smbd": get_service_status("smbd"),
+	    "nmbd": get_service_status("nmbd"),
+	    "buscador": get_service_status("buscador"),
+	    "home-assistant": get_service_status("home-assistant"),
+	    "timeproxy": get_service_status("timeproxy")
         }
     })
 
@@ -230,7 +236,7 @@ def stats():
 def get_data():
     try:
         # 1. Lista de servicios a chequear
-        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL', 'transmission-daemon', 'agenda-cron', 'agenda-web']
+        services_to_check = ['nginx', 'docker', 'ssh', 'pishare', 'squid', 'privoxy', 'jellyfin', 'apache2', 'pihole-FTL', 'transmission-daemon', 'agenda-cron', 'agenda-web', 'smbd', 'nmbd', 'buscador', 'home-assistant', 'timeproxy']
         status_map = {}
 
         for srv in services_to_check:
@@ -257,10 +263,19 @@ def get_data():
         swap_usage = psutil.swap_memory().percent
         disk_usage = psutil.disk_usage('/').percent
 
+        # Lectura independiente de /usb
         try:
             usb_usage = psutil.disk_usage('/usb').percent
-        except Exception:
-            usb_usage = 0 # Por si el USB no estuviese montado en ese momento
+        except Exception as e:
+            print(f"Error al leer /usb: {e}")
+            usb_usage = 0
+
+        # Lectura independiente de /usb2
+        try:
+            usb2_usage = psutil.disk_usage('/usb2').percent
+        except Exception as e:
+            print(f"Error al leer /usb2: {e}")
+            usb2_usage = 0
 
         temp = "N/A"
         temps = psutil.sensors_temperatures()
@@ -278,6 +293,7 @@ def get_data():
             "swap_usage": swap_usage,
             "disk_usage": disk_usage,
             "usb_usage": usb_usage,
+	    "usb2_usage": usb2_usage,
             "services": status_map,
             "red_descarga": vel_descarga,
             "red_subida": vel_subida,
