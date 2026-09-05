@@ -211,7 +211,6 @@ def stats():
         "swap_usage": psutil.swap_memory().percent,
         "disk_usage": safe_disk_usage('/').percent,
         "usb_usage": safe_disk_usage('/usb').percent,
-        "usb2_usage": safe_disk_usage('/usb2').percent,
         "services": {
             "pishare": get_service_status("pishare"),
             "nginx": get_service_status("nginx"),
@@ -270,13 +269,6 @@ def get_data():
             print(f"Error al leer /usb: {e}")
             usb_usage = 0
 
-        # Lectura independiente de /usb2
-        try:
-            usb2_usage = psutil.disk_usage('/usb2').percent
-        except Exception as e:
-            print(f"Error al leer /usb2: {e}")
-            usb2_usage = 0
-
         temp = "N/A"
         temps = psutil.sensors_temperatures()
         if 'cpu_thermal' in temps:
@@ -293,7 +285,6 @@ def get_data():
             "swap_usage": swap_usage,
             "disk_usage": disk_usage,
             "usb_usage": usb_usage,
-	    "usb2_usage": usb2_usage,
             "services": status_map,
             "red_descarga": vel_descarga,
             "red_subida": vel_subida,
